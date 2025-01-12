@@ -19,16 +19,58 @@
 
     let food = getFood();
 
-    let gameInterval: number;
+    let lastUpdateTime = 0;
+    const moveDelay = 125;
+    let inputQueue: number[] = [1];
+    let isGameRunning = false;
 
     // Change direction with arrow keys
     const changeDirection = (e: { key: string }) => {
-        if (e.key === "ArrowUp" && direction !== gridWidth)
-            direction = -gridWidth;
-        if (e.key === "ArrowDown" && direction !== -gridWidth)
-            direction = gridWidth;
-        if (e.key === "ArrowLeft" && direction !== 1) direction = -1;
-        if (e.key === "ArrowRight" && direction !== -1) direction = 1;
+        const lastDirection = inputQueue[inputQueue.length - 1];
+        let newDirection = lastDirection;
+
+        if (e.key === "ArrowUp" && lastDirection !== gridWidth)
+            newDirection = -gridWidth;
+        if (e.key === "ArrowDown" && lastDirection !== -gridWidth)
+            newDirection = gridWidth;
+        if (e.key === "ArrowLeft" && lastDirection !== 1) newDirection = -1;
+        if (e.key === "ArrowRight" && lastDirection !== -1) newDirection = 1;
+
+        if (newDirection !== lastDirection) {
+            inputQueue.push(newDirection);
+        }
+    };
+
+    const gameLoop = (timestamp: number) => {
+        if (!isGameRunning) return;
+
+        if (timestamp - lastUpdateTime >= moveDelay) {
+            direction = inputQueue[0];
+            moveSnake();
+            inputQueue = inputQueue.slice(1);
+
+            if (inputQueue.length === 0) {
+                inputQueue.push(direction);
+            }
+
+            lastUpdateTime = timestamp;
+        }
+
+        requestAnimationFrame(gameLoop);
+    };
+
+    const startGame = () => {
+        snake = [22, 21, 20];
+        direction = 1;
+        inputQueue = [1];
+        isGameRunning = true;
+        lastUpdateTime = performance.now();
+        requestAnimationFrame(gameLoop);
+    };
+
+    const endGame = () => {
+        isGameRunning = false;
+        alert("Game Over!");
     };
 
     // Move snake
@@ -43,8 +85,7 @@
             (direction === -1 && head % gridWidth === gridWidth - 1) ||
             snake.includes(head)
         ) {
-            clearInterval(gameInterval);
-            alert("Game Over!");
+            endGame();
             return;
         }
 
@@ -57,27 +98,17 @@
         }
     };
 
-    const startGame = () => {
-        clearInterval(gameInterval);
-        snake = [22, 21, 20];
-
-        direction = 1;
-        gameInterval = setInterval(() => {
-            moveSnake();
-        }, 200); // Move every 200ms
-    };
-
     // Listen for arrow key presses
     window.addEventListener("keydown", changeDirection);
 
     // Reactive grid updates
-    $: grid = grid.map((_, index) =>
-        snake.includes(index)
-            ? "snake" // Snake cells
-            : index === food
-              ? "food" // Food cell
-              : null
-    );
+    // $: grid = grid.map((_, index) =>
+    //     snake.includes(index)
+    //         ? "snake" // Snake cells
+    //         : index === food
+    //           ? "food" // Food cell
+    //           : null
+    // );
 </script>
 
 <div
@@ -85,7 +116,17 @@
     style="--grid-width: {gridWidth}; --grid-height: {gridHeight}"
 >
     {#each grid as cell, index}
-        <div class="cell {cell}"></div>
+        {#if snake.includes(index)}
+            {#if index === snake[0]}
+                <div class="cell snake head"></div>
+            {:else}
+                <div class="cell snake"></div>
+            {/if}
+        {:else if index === food}
+            <div class="cell food"></div>
+        {:else}
+            <div class="cell"></div>
+        {/if}
     {/each}
 </div>
 
