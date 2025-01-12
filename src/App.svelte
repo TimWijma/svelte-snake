@@ -1,47 +1,116 @@
 <script lang="ts">
-  import svelteLogo from './assets/svelte.svg'
-  import viteLogo from '/vite.svg'
-  import Counter from './lib/Counter.svelte'
+    const gridHeight = 10;
+    const gridWidth = 20;
+
+    let grid = Array(gridHeight * gridWidth).fill(null);
+
+    let snake = [22, 21, 20];
+    let direction = 1;
+
+    const getFood = () => {
+        let newFood = Math.floor(Math.random() * grid.length);
+
+        while (snake.includes(newFood)) {
+            newFood = Math.floor(Math.random() * grid.length);
+        }
+
+        return newFood;
+    };
+
+    let food = getFood();
+
+    let gameInterval: number;
+
+    // Change direction with arrow keys
+    const changeDirection = (e: { key: string }) => {
+        if (e.key === "ArrowUp" && direction !== gridWidth)
+            direction = -gridWidth;
+        if (e.key === "ArrowDown" && direction !== -gridWidth)
+            direction = gridWidth;
+        if (e.key === "ArrowLeft" && direction !== 1) direction = -1;
+        if (e.key === "ArrowRight" && direction !== -1) direction = 1;
+    };
+
+    // Move snake
+    const moveSnake = () => {
+        const head = snake[0] + direction;
+
+        // Check for collisions
+        if (
+            head < 0 ||
+            head >= grid.length ||
+            (direction === 1 && head % gridWidth === 0) ||
+            (direction === -1 && head % gridWidth === gridWidth - 1) ||
+            snake.includes(head)
+        ) {
+            clearInterval(gameInterval);
+            alert("Game Over!");
+            return;
+        }
+
+        snake = [head, ...snake];
+
+        if (head === food) {
+            food = getFood();
+        } else {
+            snake.pop();
+        }
+    };
+
+    const startGame = () => {
+        clearInterval(gameInterval);
+        snake = [22, 21, 20];
+
+        direction = 1;
+        gameInterval = setInterval(() => {
+            moveSnake();
+        }, 200); // Move every 200ms
+    };
+
+    // Listen for arrow key presses
+    window.addEventListener("keydown", changeDirection);
+
+    // Reactive grid updates
+    $: grid = grid.map((_, index) =>
+        snake.includes(index)
+            ? "snake" // Snake cells
+            : index === food
+              ? "food" // Food cell
+              : null
+    );
 </script>
 
-<main>
-  <div>
-    <a href="https://vite.dev" target="_blank" rel="noreferrer">
-      <img src={viteLogo} class="logo" alt="Vite Logo" />
-    </a>
-    <a href="https://svelte.dev" target="_blank" rel="noreferrer">
-      <img src={svelteLogo} class="logo svelte" alt="Svelte Logo" />
-    </a>
-  </div>
-  <h1>Vite + Svelte</h1>
+<div
+    class="grid"
+    style="--grid-width: {gridWidth}; --grid-height: {gridHeight}"
+>
+    {#each grid as cell, index}
+        <div class="cell {cell}"></div>
+    {/each}
+</div>
 
-  <div class="card">
-    <Counter />
-  </div>
-
-  <p>
-    Check out <a href="https://github.com/sveltejs/kit#readme" target="_blank" rel="noreferrer">SvelteKit</a>, the official Svelte app framework powered by Vite!
-  </p>
-
-  <p class="read-the-docs">
-    Click on the Vite and Svelte logos to learn more
-  </p>
-</main>
+<button on:click={startGame}>Start Game</button>
 
 <style>
-  .logo {
-    height: 6em;
-    padding: 1.5em;
-    will-change: filter;
-    transition: filter 300ms;
-  }
-  .logo:hover {
-    filter: drop-shadow(0 0 2em #646cffaa);
-  }
-  .logo.svelte:hover {
-    filter: drop-shadow(0 0 2em #ff3e00aa);
-  }
-  .read-the-docs {
-    color: #888;
-  }
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(var(--grid-width), 1fr);
+        width: 200px;
+        height: 200px;
+        gap: 2px;
+    }
+    .cell {
+        width: 100%;
+        aspect-ratio: 1;
+        background-color: lightgray;
+    }
+    .cell.snake {
+        background-color: green;
+    }
+    .cell.food {
+        background-color: red;
+    }
+    button {
+        margin-top: 10px;
+    }
 </style>
