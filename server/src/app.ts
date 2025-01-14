@@ -3,11 +3,14 @@ import { createServer } from "node:http";
 import { Server } from "socket.io";
 import cors from "cors";
 
-class User {
-    constructor(public id: string, public name: string) {}
+class ServerPlayer {
+    constructor(public id: string, public name: string, public playerNumber: number) {}
+}
+class ClientPlayer {
+    constructor(public name: string, public playerNumber: number) {}
 }
 
-const users: User[] = [];
+const users: ServerPlayer[] = [];
 
 const app = express();
 const server = createServer(app);
@@ -33,26 +36,42 @@ io.on("connection", (socket) => {
         if (user) {
             users.splice(users.indexOf(user), 1);
             console.log(`User ${user.name} left`);
+
+            for (let i = 0; i < users.length; i++) {
+                users[i].playerNumber = i + 1;
+            }
         }
 
-        io.emit("users", users.map((user) => user.name));
+        sendUsers();
     });
 
     socket.on("join", (name: string) => {
-        const user = new User(socket.id, name);
+        if (users.length >= 2) {
+            socket.emit("full");
+            return;
+        }
+
+        const user = new ServerPlayer(socket.id, name, users.length + 1);
         users.push(user);
         console.log(`User ${name} joined`);
 
         console.log("Users: ", users.map((user) => user.name).join(", "));
 
         socket.emit("joined", user.name);
-        io.emit("users", users.map((user) => user.name));
-    });
+        sendUsers();
 
-    socket.on("message", (message) => {
-        console.log(message);
+        if (users.length === 2) {
+            io.emit("start");
+        }
     });
 });
+
+const sendUsers = () => {
+    io.emit(
+        "users",
+        users
+    );
+}
 
 server.listen(3000, () => {
     console.log("server running at http://localhost:3000");

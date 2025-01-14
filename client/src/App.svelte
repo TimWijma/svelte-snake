@@ -1,8 +1,9 @@
 <script lang="ts">
     import { io, Socket } from "socket.io-client";
     import Snake from "./Snake.svelte";
+    import { ClientPlayer, Player } from "./lib/Player";
 
-    let users: string[] = [];
+    let players: Player[] = [];
     let joined = false;
 
     let socket: Socket;
@@ -20,46 +21,47 @@
             joined = true;
         });
 
-        socket.on("users", (data: string[]) => {
-            users = data;
+        socket.on("users", (data: ClientPlayer[]) => {
+            // players = data.map((name) => new Player(name));
+            players = [];
+            data.forEach((player) => {
+                players.push(new Player(player.name, player.playerNumber));
+            });
+        });
+
+        socket.on("full", () => {
+            alert("Server is full");
+            leave();
+        });
+
+        socket.on("start", () => {
+            console.log("Game started");
         });
     };
-
-    socket = io("http://localhost:3000");
-    setupSocketListeners(socket);
 
     const join = () => {
         if (joined) return;
 
-        socket.removeAllListeners();
-        socket.disconnect();
+        socket?.removeAllListeners();
+        socket?.disconnect();
 
         socket = io("http://localhost:3000");
         setupSocketListeners(socket);
 
         const name = prompt("Enter your name");
-        if (name) {
-            socket.emit("join", name);
-        }
+        if (name) socket.emit("join", name);
     };
 
     const leave = () => {
         socket.removeAllListeners();
         socket.disconnect();
         joined = false;
-        users = [];
-    };
-
-    const sendMessage = () => {
-        if (!socket?.connected) return;
-
-        socket.emit("message", "Hello from client");
+        players = [];
     };
 </script>
 
-<Snake />
+<Snake bind:players />
 
-<button on:click={sendMessage}>Send message</button>
 {#if !joined}
     <h2>Join server</h2>
     <p>Click the button below to join the server</p>
@@ -70,11 +72,11 @@
     <button on:click={leave}>Leave server</button>
 {/if}
 
-{#if users.length > 0}
+{#if players.length > 0}
     <h2>Users</h2>
     <ul>
-        {#each users as user}
-            <li>{user}</li>
+        {#each players as player}
+            <li>{player.playerNumber}: {player.name}</li>
         {/each}
     </ul>
 {/if}
