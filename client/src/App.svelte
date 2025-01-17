@@ -37,6 +37,10 @@
         socket.on("start", () => {
             console.log("Game started");
         });
+
+        socket.on("gamestate", (gamestate: string) => {
+            console.log(gamestate);
+        });
     };
 
     const join = () => {

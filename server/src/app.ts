@@ -2,15 +2,23 @@ import express from "express";
 import { createServer } from "node:http";
 import { Server } from "socket.io";
 import cors from "cors";
+import { Game } from "./snake";
 
-class ServerPlayer {
-    constructor(public id: string, public name: string, public playerNumber: number) {}
+export class ServerPlayer {
+    constructor(
+        public id: string,
+        public name: string,
+        public playerNumber: number
+    ) {}
 }
 class ClientPlayer {
     constructor(public name: string, public playerNumber: number) {}
 }
 
 const users: ServerPlayer[] = [];
+
+let game: Game;
+let gameLoop;
 
 const app = express();
 const server = createServer(app);
@@ -62,16 +70,23 @@ io.on("connection", (socket) => {
 
         if (users.length === 2) {
             io.emit("start");
+            startGame();
         }
     });
 });
 
 const sendUsers = () => {
-    io.emit(
-        "users",
-        users
-    );
-}
+    io.emit("users", users);
+};
+
+const startGame = () => {
+    game = new Game(10, 10, users);
+    game.start();
+
+    gameLoop = setInterval(() => {
+        io.emit("gamestate", game.getState());
+    }, 125);
+};
 
 server.listen(3000, () => {
     console.log("server running at http://localhost:3000");

@@ -21,8 +21,10 @@
         const lastDirection = inputQueue[inputQueue.length - 1];
         let newDirection = lastDirection;
 
-        if (e.key === "ArrowUp" && lastDirection !== gridWidth) newDirection = -gridWidth;
-        if (e.key === "ArrowDown" && lastDirection !== -gridWidth) newDirection = gridWidth;
+        if (e.key === "ArrowUp" && lastDirection !== gridWidth)
+            newDirection = -gridWidth;
+        if (e.key === "ArrowDown" && lastDirection !== -gridWidth)
+            newDirection = gridWidth;
         if (e.key === "ArrowLeft" && lastDirection !== 1) newDirection = -1;
         if (e.key === "ArrowRight" && lastDirection !== -1) newDirection = 1;
 
@@ -111,7 +113,10 @@
 
 <svelte:window on:keydown={changeDirection} />
 
-<div class="grid" style="--grid-width: {gridWidth}; --grid-height: {gridHeight}">
+<div
+    class="grid"
+    style="--grid-width: {gridWidth}; --grid-height: {gridHeight}"
+>
     {#each grid as cell, index}
         <div class={getCellClass(index, snake, food)}></div>
     {/each}
