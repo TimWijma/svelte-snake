@@ -11,14 +11,10 @@ export class ServerPlayer {
         public playerNumber: number
     ) {}
 }
-class ClientPlayer {
-    constructor(public name: string, public playerNumber: number) {}
-}
 
 const users: ServerPlayer[] = [];
 
 let game: Game;
-let gameLoop;
 
 const app = express();
 const server = createServer(app);
@@ -73,6 +69,13 @@ io.on("connection", (socket) => {
             startGame();
         }
     });
+
+    socket.on("direction", (direction: number) => {
+        const user = users.find((user) => user.id === socket.id);
+        if (user) {
+            game.getPlayer(user.playerNumber)?.setDirection(direction);
+        }
+    });
 });
 
 const sendUsers = () => {
@@ -83,9 +86,15 @@ const startGame = () => {
     game = new Game(10, 10, users);
     game.start();
 
-    gameLoop = setInterval(() => {
+    let gameLoop = setInterval(() => {
         io.emit("gamestate", game.getState());
-    }, 125);
+
+        game.nextFrame();
+
+        if (game.finished) {
+            clearInterval(gameLoop);
+        }
+    }, 1000);
 };
 
 server.listen(3000, () => {

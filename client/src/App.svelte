@@ -8,6 +8,8 @@
 
     let socket: Socket;
 
+    let gameState = "";
+
     const setupSocketListeners = (socket: Socket) => {
         socket.on("connect", () => {
             console.log("Connected to server");
@@ -39,7 +41,7 @@
         });
 
         socket.on("gamestate", (gamestate: string) => {
-            console.log(gamestate);
+            gameState = gamestate;
         });
     };
 
@@ -64,7 +66,7 @@
     };
 </script>
 
-<Snake bind:players />
+<Snake bind:players bind:gameStateString={gameState} bind:socket />
 
 {#if !joined}
     <h2>Join server</h2>

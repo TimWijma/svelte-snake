@@ -1,7 +1,14 @@
 <script lang="ts">
+    import { Socket } from "socket.io-client";
     import { Player } from "./lib/Player";
 
     export let players: Player[] = [];
+    export let gameStateString: string;
+    export let socket: Socket;
+
+    $: gameState = gameStateString.split("");
+
+    $: console.log(socket);
 
     const gridHeight = 10;
     const gridWidth = 10;
@@ -31,6 +38,8 @@
         if (newDirection !== lastDirection) {
             inputQueue.push(newDirection);
         }
+
+        socket.emit("direction", newDirection);
     };
 
     const gameLoop = (timestamp: number) => {
@@ -61,15 +70,6 @@
         return newFood;
     };
 
-    const startGame = () => {
-        snake = [2, 1, 0];
-        direction = 1;
-        food = getFood();
-        isGameRunning = true;
-        lastUpdateTime = performance.now();
-        requestAnimationFrame(gameLoop);
-    };
-
     const endGame = () => {
         isGameRunning = false;
         alert("Game Over!");
@@ -98,16 +98,13 @@
         }
     };
 
-    const getCellClass = (index: number, snake: number[], food: number) => {
-        if (snake.includes(index)) {
-            if (index === snake[0]) {
-                return "cell snake head";
-            }
-            return "cell snake";
-        } else if (index === food) {
-            return "cell food";
-        }
-        return "cell";
+    const snakeColorMap: { [key: string]: string } = {
+        H: "darkgreen",
+        S: "green",
+        P: "darkblue",
+        B: "blue",
+        F: "red",
+        O: "lightgray",
     };
 </script>
 
@@ -117,12 +114,13 @@
     class="grid"
     style="--grid-width: {gridWidth}; --grid-height: {gridHeight}"
 >
-    {#each grid as cell, index}
-        <div class={getCellClass(index, snake, food)}></div>
+    {#each gameState as cell}
+        <div
+            class="cell"
+            style="background-color: {snakeColorMap[cell] || 'lightgray'}"
+        ></div>
     {/each}
 </div>
-
-<button on:click={startGame}>Start Game</button>
 
 <style>
     .grid {
@@ -136,17 +134,5 @@
         width: 100%;
         aspect-ratio: 1;
         background-color: lightgray;
-    }
-    .cell.snake {
-        background-color: green;
-    }
-    .cell.snake.head {
-        background-color: darkgreen;
-    }
-    .cell.food {
-        background-color: red;
-    }
-    button {
-        margin-top: 10px;
     }
 </style>
