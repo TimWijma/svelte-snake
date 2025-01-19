@@ -75,10 +75,20 @@ io.on("connection", (socket) => {
 
         const user = users.find((user) => user.id === socket.id);
         console.log("User", user?.name, "changed direction to", direction);
-        
+
         if (user) {
-            game.getPlayer(user.playerNumber)?.setDirection(direction);
-            console.log("Player", user.playerNumber, "changed direction to", direction);
+            let player = game.getPlayer(user.playerNumber);
+            // game.getPlayer(user.playerNumber)?.setDirection(direction);
+
+            if (player) {
+                player.setDirection(direction);
+                console.log(
+                    "Player",
+                    user.playerNumber,
+                    "changed direction to",
+                    direction
+                );
+            }
         }
     });
 });
@@ -99,7 +109,7 @@ const startGame = () => {
         if (game.finished) {
             clearInterval(gameLoop);
         }
-    }, 1000);
+    }, 125);
 };
 
 server.listen(3000, () => {

@@ -2,11 +2,16 @@
     import { Game } from "./lib/Game";
     import { SocketManager } from "./lib/SocketManager";
 
-    export let game: Game;
-    export let socketManager: SocketManager;
+    const { game = $bindable(), socketManager = $bindable() } = $props<{
+        game: Game;
+        socketManager: SocketManager;
+    }>();
 
-    $effect(() => {
-        game.grid = [...game.grid];
+    let gridState = $state<string[]>([]);
+    $effect.root(() => {
+        game.gridStore.subscribe((value: string[]) => {
+            gridState = value;
+        });
     });
 
     const changeDirection = (e: { key: string }) => {
@@ -39,7 +44,7 @@
     class="grid"
     style="--grid-width: {game.width}; --grid-height: {game.height}"
 >
-    {#each game.grid as cell}
+    {#each gridState as cell}
         <div
             class="cell"
             style="background-color: {snakeColorMap[cell] || 'lightgray'}"

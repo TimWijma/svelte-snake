@@ -5,6 +5,10 @@ class Player {
     direction: number = 1;
     playerNumber: number = 0;
 
+    constructor(playerNumber: number) {
+        this.playerNumber = playerNumber;
+    }
+
     setDirection(direction: number) {
         this.direction = direction;
     }
@@ -26,7 +30,7 @@ export class Game {
         this.gridWidth = width;
         this.grid = Array(height * width).fill(null);
 
-        this.players = players.map(() => new Player());
+        this.players = players.map((player) => new Player(player.playerNumber));
     }
 
     getPlayer(playerNumber: number): Player | null {
