@@ -1,72 +1,40 @@
 <script lang="ts">
-    import { io, Socket } from "socket.io-client";
     import Snake from "./Snake.svelte";
-    import { ClientPlayer, Player } from "./lib/Player";
+    import { Game } from "./lib/Game";
+    import { SocketManager } from "./lib/SocketManager";
 
-    let players: Player[] = [];
+    const SERVER_URL = "http://localhost:3000";
+
+    let game: Game | null = null;
+    let socketManager: SocketManager | null = null;
+
     let joined = false;
 
-    let socket: Socket;
-
-    let gameState = "";
-
-    const setupSocketListeners = (socket: Socket) => {
-        socket.on("connect", () => {
-            console.log("Connected to server");
-        });
-
-        socket.on("disconnect", () => {
-            console.log("Disconnected from server");
-        });
-
-        socket.on("joined", () => {
-            joined = true;
-        });
-
-        socket.on("users", (data: ClientPlayer[]) => {
-            // players = data.map((name) => new Player(name));
-            players = [];
-            data.forEach((player) => {
-                players.push(new Player(player.name, player.playerNumber));
-            });
-        });
-
-        socket.on("full", () => {
-            alert("Server is full");
-            leave();
-        });
-
-        socket.on("start", () => {
-            console.log("Game started");
-        });
-
-        socket.on("gamestate", (gamestate: string) => {
-            gameState = gamestate;
-        });
-    };
-
     const join = () => {
-        if (joined) return;
-
-        socket?.removeAllListeners();
-        socket?.disconnect();
-
-        socket = io("http://localhost:3000");
-        setupSocketListeners(socket);
-
         const name = prompt("Enter your name");
-        if (name) socket.emit("join", name);
+
+        if (name) {
+            game = new Game(10, 10);
+
+            socketManager = new SocketManager(SERVER_URL, game);
+            socketManager.join(name);
+
+            joined = true;
+        }
     };
 
     const leave = () => {
-        socket.removeAllListeners();
-        socket.disconnect();
+        socketManager?.leave();
         joined = false;
-        players = [];
+
+        game = null;
+        socketManager = null;
     };
 </script>
 
-<Snake bind:players bind:gameStateString={gameState} bind:socket />
+{#if game && socketManager}
+    <Snake bind:game bind:socketManager />
+{/if}
 
 {#if !joined}
     <h2>Join server</h2>
@@ -78,11 +46,13 @@
     <button on:click={leave}>Leave server</button>
 {/if}
 
-{#if players.length > 0}
-    <h2>Users</h2>
-    <ul>
-        {#each players as player}
-            <li>{player.playerNumber}: {player.name}</li>
-        {/each}
-    </ul>
+{#if game}
+    {#if game.players && game.players.length > 0}
+        <h2>Users</h2>
+        <ul>
+            {#each game.players as player}
+                <li>{player.playerNumber}: {player.name}</li>
+            {/each}
+        </ul>
+    {/if}
 {/if}

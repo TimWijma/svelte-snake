@@ -1,100 +1,25 @@
 <script lang="ts">
-    import { Socket } from "socket.io-client";
-    import { Player } from "./lib/Player";
+    import { Game } from "./lib/Game";
+    import { SocketManager } from "./lib/SocketManager";
 
-    export let players: Player[] = [];
-    export let gameStateString: string;
-    export let socket: Socket;
+    export let game: Game;
+    export let socketManager: SocketManager;
 
-    $: gameState = gameStateString.split("");
-
-    $: console.log(socket);
-
-    const gridHeight = 10;
-    const gridWidth = 10;
-
-    let grid = Array(gridHeight * gridWidth).fill(null);
-
-    let snake: number[] = [];
-    let direction: number;
-    let food: number;
-
-    let lastUpdateTime = 0;
-    const moveDelay = 125;
-    let inputQueue: number[] = [1];
-    let isGameRunning = false;
+    $effect(() => {
+        game.grid = [...game.grid];
+    });
 
     const changeDirection = (e: { key: string }) => {
-        const lastDirection = inputQueue[inputQueue.length - 1];
-        let newDirection = lastDirection;
+        let newDirection: number = game.direction;
 
-        if (e.key === "ArrowUp" && lastDirection !== gridWidth)
-            newDirection = -gridWidth;
-        if (e.key === "ArrowDown" && lastDirection !== -gridWidth)
-            newDirection = gridWidth;
-        if (e.key === "ArrowLeft" && lastDirection !== 1) newDirection = -1;
-        if (e.key === "ArrowRight" && lastDirection !== -1) newDirection = 1;
+        if (e.key === "ArrowUp") newDirection = -game.width;
+        if (e.key === "ArrowDown") newDirection = game.width;
+        if (e.key === "ArrowLeft") newDirection = -1;
+        if (e.key === "ArrowRight") newDirection = 1;
 
-        if (newDirection !== lastDirection) {
-            inputQueue.push(newDirection);
-        }
-
-        socket.emit("direction", newDirection);
-    };
-
-    const gameLoop = (timestamp: number) => {
-        if (!isGameRunning) return;
-
-        if (timestamp - lastUpdateTime >= moveDelay) {
-            direction = inputQueue[0];
-            moveSnake();
-            inputQueue = inputQueue.slice(1);
-
-            if (inputQueue.length === 0) {
-                inputQueue.push(direction);
-            }
-
-            lastUpdateTime = timestamp;
-        }
-
-        requestAnimationFrame(gameLoop);
-    };
-
-    const getFood = () => {
-        let newFood = Math.floor(Math.random() * grid.length);
-
-        while (snake.includes(newFood)) {
-            newFood = Math.floor(Math.random() * grid.length);
-        }
-
-        return newFood;
-    };
-
-    const endGame = () => {
-        isGameRunning = false;
-        alert("Game Over!");
-    };
-
-    const moveSnake = () => {
-        const head = snake[0] + direction;
-
-        if (
-            head < 0 ||
-            head >= grid.length ||
-            (direction === 1 && head % gridWidth === 0) ||
-            (direction === -1 && head % gridWidth === gridWidth - 1) ||
-            snake.includes(head)
-        ) {
-            endGame();
-            return;
-        }
-
-        snake = [head, ...snake];
-
-        if (head === food) {
-            food = getFood();
-        } else {
-            snake.pop();
+        if (newDirection !== -game.direction) {
+            socketManager.move(newDirection);
+            game.direction = newDirection;
         }
     };
 
@@ -112,9 +37,9 @@
 
 <div
     class="grid"
-    style="--grid-width: {gridWidth}; --grid-height: {gridHeight}"
+    style="--grid-width: {game.width}; --grid-height: {game.height}"
 >
-    {#each gameState as cell}
+    {#each game.grid as cell}
         <div
             class="cell"
             style="background-color: {snakeColorMap[cell] || 'lightgray'}"

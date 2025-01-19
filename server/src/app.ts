@@ -61,7 +61,7 @@ io.on("connection", (socket) => {
 
         console.log("Users: ", users.map((user) => user.name).join(", "));
 
-        socket.emit("joined", user.name);
+        // socket.emit("joined", user.name);
         sendUsers();
 
         if (users.length === 2) {
@@ -70,10 +70,15 @@ io.on("connection", (socket) => {
         }
     });
 
-    socket.on("direction", (direction: number) => {
+    socket.on("move", (direction: number) => {
+        if (!game || game.finished) return;
+
         const user = users.find((user) => user.id === socket.id);
+        console.log("User", user?.name, "changed direction to", direction);
+        
         if (user) {
             game.getPlayer(user.playerNumber)?.setDirection(direction);
+            console.log("Player", user.playerNumber, "changed direction to", direction);
         }
     });
 });
@@ -87,7 +92,7 @@ const startGame = () => {
     game.start();
 
     let gameLoop = setInterval(() => {
-        io.emit("gamestate", game.getState());
+        io.emit("state", game.getState());
 
         game.nextFrame();
 
