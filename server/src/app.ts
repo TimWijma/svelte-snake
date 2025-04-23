@@ -24,10 +24,6 @@ const io = new Server(server, {
     },
 });
 
-app.get("/", (req, res) => {
-    res.send("hello world!");
-});
-
 io.on("connection", (socket) => {
     console.log("A user connected");
 
@@ -40,29 +36,6 @@ io.on("connection", (socket) => {
             for (let i = 0; i < users.length; i++) {
                 users[i].playerNumber = i + 1;
             }
-        }
-
-        sendUsers();
-    });
-
-    socket.on("join", (name: string) => {
-        if (users.length >= 2) {
-            socket.emit("full");
-            return;
-        }
-
-        const user = new ServerPlayer(socket.id, name, users.length + 1);
-        users.push(user);
-        console.log(`User ${name} joined`);
-
-        console.log("Users: ", users.map((user) => user.name).join(", "));
-
-        // socket.emit("joined", user.name);
-        sendUsers();
-
-        if (users.length === 2) {
-            io.emit("start");
-            startGame();
         }
     });
 
@@ -84,10 +57,6 @@ io.on("connection", (socket) => {
     });
 });
 
-const sendUsers = () => {
-    io.emit("users", users);
-};
-
 const startGame = () => {
     game = new Game(10, 10, users);
     game.start();
@@ -102,7 +71,3 @@ const startGame = () => {
         }
     }, 125);
 };
-
-server.listen(3000, () => {
-    console.log("server running at http://localhost:3000");
-});
