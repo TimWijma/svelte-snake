@@ -11,8 +11,12 @@ export const GET: RequestHandler = async () => {
     return json(lobbies);
 };
 
-export const POST: RequestHandler = async ({}) => {
+export const POST: RequestHandler = async ({ request }) => {
+    const { player } = await request.json();
+
     const lobby = lobbyManager.createLobby();
+
+    lobby.join(player);
 
     return json({ code: lobby.code });
 };

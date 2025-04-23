@@ -35,3 +35,21 @@ export const POST: RequestHandler = async ({ request, params }) => {
         return new Response("Lobby is full", { status: 400 });
     }
 };
+
+export const DELETE: RequestHandler = async ({ params, url }) => {
+    const { code } = params;
+    const player = url.searchParams.get("player");
+    const lobby = lobbyManager.lobbies.get(code);
+
+    if (!lobby) {
+        return new Response("Lobby not found", { status: 404 });
+    }
+
+    if (!player) {
+        return new Response("Player name is required", { status: 400 });
+    }
+
+    lobby.leave(player);
+
+    return json({ success: true });
+};

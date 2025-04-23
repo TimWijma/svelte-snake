@@ -17,6 +17,11 @@ export class Lobby {
     }
 
     join(player: string) {
+        if (!player) {
+            console.log(`Player is undefined or null`);
+            return false;
+        }
+
         if (this.players.includes(player)) {
             console.log(`Player ${player} is already in lobby ${this.code}`);
             return true;

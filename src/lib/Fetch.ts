@@ -1,3 +1,5 @@
+import { page } from "$app/state";
+
 /**
  * Fetch wrapper
  *
@@ -85,9 +87,10 @@ export class Fetch {
     }
 
     private static createUrl(url: string, params: any = {}) {
-        console.log(url);
+        const HOME_URL = "http://localhost:5173";
+
         if (url.startsWith("/")) {
-            url = window.location.origin + url;
+            url = `${HOME_URL}${url}`;
         }
 
         let apiUrl = new URL(url);
