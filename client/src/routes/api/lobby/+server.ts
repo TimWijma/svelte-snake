@@ -1,12 +1,18 @@
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
+import { lobbyManager } from "$lib/server/lobbyStore";
 
 export const GET: RequestHandler = async () => {
-    // Mock data - replace with your actual data source
-    const lobbies = [
-        { code: "ABC123", players: ["Player1", "Player2"] },
-        { code: "XYZ789", players: ["Player3"] },
-    ];
+    const lobbies = Array.from(lobbyManager.lobbies.values()).map((lobby) => ({
+        code: lobby.code,
+        players: lobby.players,
+    }));
 
     return json(lobbies);
+};
+
+export const POST: RequestHandler = async ({}) => {
+    const lobby = lobbyManager.createLobby();
+
+    return json({ code: lobby.code });
 };
