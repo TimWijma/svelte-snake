@@ -5,11 +5,7 @@ import cors from "cors";
 import { Game } from "./snake";
 
 export class ServerPlayer {
-    constructor(
-        public id: string,
-        public name: string,
-        public playerNumber: number
-    ) {}
+    constructor(public id: string, public name: string, public playerNumber: number) {}
 }
 
 const users: ServerPlayer[] = [];
@@ -82,12 +78,7 @@ io.on("connection", (socket) => {
 
             if (player) {
                 player.setDirection(direction);
-                console.log(
-                    "Player",
-                    user.playerNumber,
-                    "changed direction to",
-                    direction
-                );
+                console.log("Player", user.playerNumber, "changed direction to", direction);
             }
         }
     });
